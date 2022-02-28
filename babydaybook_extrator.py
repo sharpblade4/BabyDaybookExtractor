@@ -116,6 +116,20 @@ def parse_args() -> Tuple[str, str]:
     return args.in_path, args.out_path
 
 
+def raw_processing() -> None:
+    import pandas as pd
+    import sqlite3
+    import datetime
+    import matplotlib.pyplot as plt
+    
+    con = sqlite3.connect("./BabyDaybook_20220228.db")
+    df = pd.read_sql_query("SELECT * from daily_actions", con)
+    (df[df.type=='sleeping'].groupby(['year','month','day']).sum().duration/(3600*1e3)).plot(title='sleeping hours per day')
+    plt.show()
+    df[df.type=='bottle'].groupby(['year','month','day']).sum().volume[1:-1].plot(title='milk ml per day')
+    plt.show()
+
+    
 def main() -> None:
     in_path, out_path = parse_args()
     extract(in_path, out_path)
