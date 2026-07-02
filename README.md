@@ -8,49 +8,85 @@ While the app supplies statistics and exportable PDF file (for paying users only
 it doesn't grant access to the raw data.
 
 The *BabyDaybookExtractor* solves this limitation by utilizing the backup mechanism of the app,
-and extract a pandas dataframe with all the data. This, allows the interested parent to
+and extracts the raw data to CSV files and interactive HTML charts. This allows the interested parent to
 research the data and find interesting patterns or learn from the statistics.
+
+## Features
+- **Activity extraction**: Export all daily activities (feeding, sleeping, diapers, baths, etc.) to CSV
+- **Growth data extraction**: Export weight, height, and head circumference measurements to CSV
+- **Interactive growth chart**: Generate a standalone HTML file with interactive charts (powered by Chart.js)
 
 ## Usage
 ### Requirements
 Make sure you have a *python* environment in version 3.7 or higher.
+No external dependencies are required — the script uses only the Python standard library.
+
 To install python follow [this guide](https://wiki.python.org/moin/BeginnersGuide/Download).
 
-### Extract The Data
-#### Step 0: From the app
+### Getting the Backup File
 In the application, under the *Account* window, click on the settings wheel icon (top right). 
 Then, select *Backup & Restore* and press the sharing icon. 
 Choose your preferable method of getting this file to the computer (e.g., emailing yourself).
 
-#### Step 1: From the computer
-Run the *BabyDaybookExtractor* on the file as follows:
+### Extract Activities
+Extract daily activities (feeding, sleeping, diapers, etc.) to CSV:
 ```shell
-python babydaybook_extrator.py -i /PATH/TO/DOWNLOADED/BabyDaybook_20211024.db -o /PATH/TO/output.csv
+python babydaybook_extractor.py -i /PATH/TO/BabyDaybook_backup.db -o activities.csv
 ```
-This will create a csv file with all the data, which can be opened by pandas or any other way. 
 
-#### Step 2: [Optional] Analysis
-This is an example for analysing the data, using *pandas* library. To run it the python environment 
-must have *pandas* library installed. To install it, run `python -m pip install pandas`.
+### Extract Growth Data
+Export weight, height, and head circumference to CSV:
+```shell
+python babydaybook_extractor.py -i /PATH/TO/BabyDaybook_backup.db --growth -o growth.csv
+```
 
-Then, use a python interactive session:
+### Generate Growth Chart
+Generate an interactive HTML chart:
+```shell
+python babydaybook_extractor.py -i /PATH/TO/BabyDaybook_backup.db --growth --html growth_chart.html
+```
+
+You can also generate both CSV and HTML at once:
+```shell
+python babydaybook_extractor.py -i /PATH/TO/BabyDaybook_backup.db --growth -o growth.csv --html growth_chart.html
+```
+
+The HTML chart includes:
+- Weight over time (kg)
+- Height over time (cm)
+- Head circumference over time (cm)
+- A summary data table
+
+Open the `.html` file in any browser — no server needed.
+
+![Growth Chart Example](https://img.shields.io/badge/Chart.js-Interactive-blue)
+
+### [Optional] Analysis with pandas
+Install pandas: `python -m pip install pandas`
+
 ```python
 import pandas as pd
-df = pd.read_csv('/PATH/TO/output.csv')
 
+# Activities analysis
+df = pd.read_csv('activities.csv')
 df.activity.value_counts()
-# Out[]: 
-#     breastfeeding                        404
-#     sleeping                             147
-#     diaper_change                        143
-#     bath                                  25
-#     temperature                           11
 
-df[df.activity == 'breastfeeding'][['left_duration_seconds', 'right_duration_seconds']].mean()
-# Out[]: left_duration_seconds     431.508317
-#        right_duration_seconds    573.674952
-df[df.activity == 'diaper_change'][['poo', 'pee']].sum()
-# Out[]: 
-#     poo    130
-#     pee    139
+# Growth analysis
+growth = pd.read_csv('growth.csv')
+print(growth[['date', 'weight_kg', 'height_cm']])
 ```
+
+## Database Structure
+The Baby Daybook backup is a SQLite database containing these tables:
+| Table | Description |
+|-------|-------------|
+| `daily_actions` | All logged activities (feeding, sleeping, diapers, baths, etc.) |
+| `growth` | Weight, height, and head circumference measurements |
+| `babies` | Baby profile information |
+| `moments` | Milestone moments |
+| `teething` | Teeth tracking |
+| `daily_notes` | Daily notes |
+
+## Migration Note
+The script filename was corrected from `babydaybook_extrator.py` to `babydaybook_extractor.py`.
+The old file is kept for backward compatibility but the new filename is recommended.
